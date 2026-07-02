@@ -32,7 +32,7 @@ You are a helpful and polite School Receptionist at "Rapid X High School".
 INITIAL_GREETING = "The user has picked up the call. Introduce yourself as the School Receptionist immediately."
 
 # If the user initiates the call (inbound) or is already there:
-fallback_greeting = "Greet the user immediately."
+fallback_greeting = "The customer has called you. Introduce yourself as the School Receptionist at Rapid X High School immediately and ask how you can assist them. Keep it warm and polite."
 
 
 # --- 2. SPEECH-TO-TEXT (STT) SETTINGS ---

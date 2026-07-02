@@ -6,6 +6,7 @@ os.environ['SSL_CERT_FILE'] = certifi.where()
 
 import logging
 import json
+import asyncio
 from dotenv import load_dotenv
 
 from livekit import agents, api
@@ -211,6 +212,37 @@ async def entrypoint(ctx: agents.JobContext):
             config_dict.update(data) # Merge configs
     except Exception:
         logger.warning("No valid JSON metadata found in Room.")
+
+    # Detect inbound call caller if no phone number was supplied in metadata
+    if not phone_number:
+        # Check if caller is already in the room
+        for p in ctx.room.remote_participants.values():
+            if p.identity.startswith("sip_"):
+                phone_number = p.identity.replace("sip_", "")
+                break
+            else:
+                phone_number = p.identity
+                break
+
+        # Wait briefly if the room starts empty (unlikely for inbound call, but safe)
+        if not phone_number:
+            logger.info("No participant found immediately. Waiting for remote participant to join...")
+            for _ in range(30):  # Wait up to 3 seconds
+                await asyncio.sleep(0.1)
+                for p in ctx.room.remote_participants.values():
+                    if p.identity.startswith("sip_"):
+                        phone_number = p.identity.replace("sip_", "")
+                        break
+                    else:
+                        phone_number = p.identity
+                        break
+                if phone_number:
+                    break
+
+        if phone_number:
+            logger.info(f"Detected inbound caller phone number: {phone_number}")
+        else:
+            logger.warning("No remote participant identity resolved.")
 
     # Initialize function context
     fnc_ctx = TransferFunctions(ctx, phone_number)
